@@ -1,0 +1,70 @@
+using UnityEngine;
+using System.Collections.Generic;
+
+public class TimeRewindBody : MonoBehaviour
+{
+    bool isRewinding = false;
+    public float recordTime = 5f; // Kaç saniye geri sarılabilir?
+
+    List<PointInTime> pointsInTime;
+    Rigidbody rb;
+
+    void Start() {
+        pointsInTime = new List<PointInTime>();
+        rb = GetComponent<Rigidbody>();
+    }
+
+    void Update() {
+        if (Input.GetKeyDown(KeyCode.Return)) StartRewind();
+        if (Input.GetKeyUp(KeyCode.Return)) StopRewind();
+    }
+
+    void FixedUpdate() {
+        if (isRewinding)
+            Rewind();
+        else
+            Record();
+    }
+
+    void Record() {
+        // En başa yeni pozisyonu ekle (Listeyi taze tut)
+        if (pointsInTime.Count > Mathf.Round(recordTime / Time.fixedDeltaTime))
+        {
+            pointsInTime.RemoveAt(pointsInTime.Count - 1); // Çok eski veriyi sil (RAM dostu)
+        }
+        pointsInTime.Insert(0, new PointInTime(transform.position, transform.rotation));
+    }
+
+    void Rewind() {
+        if (pointsInTime.Count > 0)
+        {
+            PointInTime point = pointsInTime[0];
+            transform.position = point.position;
+            transform.rotation = point.rotation;
+            pointsInTime.RemoveAt(0); // Kullanılan anı sil
+        } else {
+            StopRewind();
+        }
+    }
+
+    public void StartRewind() {
+        isRewinding = true;
+        rb.isKinematic = true; // Fiziği devre dışı bırak
+    }
+
+    public void StopRewind() {
+        isRewinding = false;
+        rb.isKinematic = false; // Fiziği tekrar aç
+    }
+}
+
+// Veriyi tutacak hafif yapı (Class yerine Struct kullanımı performansı artırır)
+public struct PointInTime {
+    public Vector3 position;
+    public Quaternion rotation;
+
+    public PointInTime(Vector3 _position, Quaternion _rotation) {
+        position = _position;
+        rotation = _rotation;
+    }
+}
