@@ -1,0 +1,53 @@
+using UnityEngine;
+
+// 1. Durumlar için bir arayüz (Interface) oluşturuyoruz
+public interface IEnemyState {
+    void EnterState(Enemy enemy);
+    void UpdateState(Enemy enemy);
+    void ExitState(Enemy enemy);
+}
+
+// 2. Düşmanın Ana Kontrolcüsü (Beyni)
+public class Enemy : MonoBehaviour {
+    public IEnemyState currentState;
+
+    // Durumları tanımlıyoruz
+    public PatrolState patrolState = new PatrolState();
+    public ChaseState chaseState = new ChaseState();
+    public AttackState attackState = new AttackState();
+
+    void Start() {
+        // Oyun başlayınca devriye gezmeye başla
+        ChangeState(patrolState);
+    }
+
+    void Update() {
+        if (currentState != null) {
+            currentState.UpdateState(this);
+        }
+    }
+
+    public void ChangeState(IEnemyState newState) {
+        if (currentState != null) currentState.ExitState(this);
+        currentState = newState;
+        currentState.EnterState(this);
+    }
+}
+
+// 3. Örnek Bir Durum: Kovalama (Chase) Modu
+public class ChaseState : IEnemyState {
+    public void EnterState(Enemy enemy) {
+        Debug.Log("Düşman oyuncuyu gördü! Kovalamaca başladı.");
+    }
+
+    public void UpdateState(Enemy enemy) {
+        // Burada oyuncunun pozisyonuna doğru hareket kodu olur
+        // Eğer oyuncu menzilden çıkarsa -> Devriye moduna dön
+        // Eğer oyuncu çok yakınsa -> Saldırı moduna geç
+        // Örn: enemy.ChangeState(enemy.attackState);
+    }
+
+    public void ExitState(Enemy enemy) {
+        Debug.Log("Kovalamaca bitti.");
+    }
+}
