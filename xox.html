@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neon XOX Oyunu</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #050505;
+            color: white;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Segoe UI', sans-serif;
+            overflow: hidden;
+        }
+
+        .game-container {
+            text-align: center;
+            position: relative;
+        }
+
+        /* Başlık ve Durum */
+        h1 {
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 5px;
+            text-shadow: 0 0 10px #00ffff, 0 0 20px #00ffff;
+            margin-bottom: 20px;
+        }
+
+        .status {
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            color: #ddd;
+        }
+
+        .player-x { color: #ff0055; text-shadow: 0 0 10px #ff0055; }
+        .player-o { color: #00ffff; text-shadow: 0 0 10px #00ffff; }
+
+        /* Oyun Tahtası (Grid) */
+        .board {
+            display: grid;
+            grid-template-columns: repeat(3, auto);
+            gap: 10px;
+            margin: 0 auto;
+            width: fit-content;
+        }
+
+        /* Hücreler */
+        .cell {
+            width: 90px;
+            height: 90px;
+            background-color: #1a1a1a;
+            border: 2px solid #333;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 5px rgba(0,0,0,0.5);
+        }
+
+        .cell:hover {
+            background-color: #252525;
+            border-color: #555;
+        }
+
+        .cell.x { color: #ff0055; text-shadow: 0 0 15px #ff0055; }
+        .cell.o { color: #00ffff; text-shadow: 0 0 15px #00ffff; }
+        
+        /* Kazanan Hücreler */
+        .cell.win {
+            background-color: rgba(255, 255, 255, 0.1);
+            border-color: white;
+        }
+
+        /* Yeniden Başlat Butonu */
+        .btn-restart {
+            margin-top: 30px;
+            background: transparent;
+            color: white;
+            border: 2px solid white;
+            padding: 10px 40px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            transition: 0.3s;
+        }
+        .btn-restart:hover {
+            background: white;
+            color: black;
+            box-shadow: 0 0 20px white;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="game-container">
+        <h1>Tic Tac Toe</h1>
+        <div class="status" id="status">Sıra: <span class="player-x">X</span></div>
+        
+        <div class="board" id="board">
+            <div class="cell" data-index="0"></div>
+            <div class="cell" data-index="1"></div>
+            <div class="cell" data-index="2"></div>
+            <div class="cell" data-index="3"></div>
+            <div class="cell" data-index="4"></div>
+            <div class="cell" data-index="5"></div>
+            <div class="cell" data-index="6"></div>
+            <div class="cell" data-index="7"></div>
+            <div class="cell" data-index="8"></div>
+        </div>
+
+        <button class="btn btn-restart" onclick="restartGame()">Tekrar Oyna</button>
+    </div>
+
+    <script>
+        // 1. Oyun Değişkenleri
+        let currentPlayer = "X";
+        let gameActive = true;
+        let gameState = ["", "", "", "", "", "", "", "", ""];
+
+        // 2. DOM Elemanları
+        const statusDisplay = document.getElementById('status');
+        const cells = document.querySelectorAll('.cell');
+
+        // 3. Kazanma Kombinasyonları (Index numaraları)
+        const winningConditions = [
+            [0, 1, 2], [3, 4, 5], [6, 7, 8], // Yatay
+            [0, 3, 6], [1, 4, 7], [2, 5, 8], // Dikey
+            [0, 4, 8], [2, 4, 6]             // Çapraz
+        ];
+
+        // 4. Hücreye Tıklama Olayı
+        cells.forEach(cell => {
+            cell.addEventListener('click', handleCellClick);
+        });
+
+        function handleCellClick(event) {
+            const clickedCell = event.target;
+            const clickedCellIndex = parseInt(clickedCell.getAttribute('data-index'));
+
+            // Eğer hücre doluysa veya oyun bittiyse işlem yapma
+            if (gameState[clickedCellIndex] !== "" || !gameActive) {
+                return;
+            }
+
+            // Hücreyi doldur ve kontrol et
+            handleCellPlayed(clickedCell, clickedCellIndex);
+            handleResultValidation();
+        }
+
+        // 5. Hücreyi Güncelleme
+        function handleCellPlayed(clickedCell, clickedCellIndex) {
+            gameState[clickedCellIndex] = currentPlayer;
+            clickedCell.innerText = currentPlayer;
+            clickedCell.classList.add(currentPlayer.toLowerCase()); // CSS rengi için class ekle
+        }
+
+        // 6. Sonuç Kontrolü (Algoritma Kısmı)
+        function handleResultValidation() {
+            let roundWon = false;
+            let winningCells = [];
+
+            // Tüm kazanma ihtimallerini döngü ile kontrol et
+            for (let i = 0; i < winningConditions.length; i++) {
+                const winCondition = winningConditions[i];
+                let a = gameState[winCondition[0]];
+                let b = gameState[winCondition[1]];
+                let c = gameState[winCondition[2]];
+
+                if (a === '' || b === '' || c === '') {
+                    continue; // Boş hücre varsa bu kombinasyonu geç
+                }
+                if (a === b && b === c) {
+                    roundWon = true;
+                    winningCells = winCondition; // Kazanan hücreleri kaydet
+                    break;
+                }
+            }
+
+            if (roundWon) {
+                statusDisplay.innerHTML = `Kazanan: <span class="player-${currentPlayer.toLowerCase()}">${currentPlayer}</span> 🎉`;
+                gameActive = false;
+                highlightWinningCells(winningCells);
+                return;
+            }
+
+            // Beraberlik Kontrolü
+            if (!gameState.includes("")) {
+                statusDisplay.innerText = "Berabere! 🤝";
+                gameActive = false;
+                return;
+            }
+
+            // Sıra Değiştir
+            currentPlayer = currentPlayer === "X" ? "O" : "X";
+            statusDisplay.innerHTML = `Sıra: <span class="player-${currentPlayer.toLowerCase()}">${currentPlayer}</span>`;
+        }
+
+        // 7. Kazanan Hücreleri Parlat
+        function highlightWinningCells(indices) {
+            indices.forEach(index => {
+                document.querySelector(`[data-index='${index}']`).classList.add('win');
+            });
+        }
+
+        // 8. Oyunu Sıfırla
+        function restartGame() {
+            gameActive = true;
+            currentPlayer = "X";
+            gameState = ["", "", "", "", "", "", "", "", ""];
+            statusDisplay.innerHTML = `Sıra: <span class="player-x">X</span>`;
+            cells.forEach(cell => {
+                cell.innerText = "";
+                cell.classList.remove('x', 'o', 'win');
+            });
+        }
+    </script>
+</body>
+</html>
