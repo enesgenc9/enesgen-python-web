@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modern Dijital Saat</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    
+    <style>
+        /* 1. CSS Değişkenleri (Tema Yönetimi İçin) */
+        :root {
+            --bg-color: #e0e5ec;
+            --text-color: #4d4d4d;
+            --clock-bg: #e0e5ec;
+            --shadow-light: #ffffff;
+            --shadow-dark: #a3b1c6;
+            --accent-color: #eb3b5a;
+        }
+
+        /* Karanlık Tema Değişkenleri */
+        .dark-mode {
+            --bg-color: #2d3436;
+            --text-color: #dfe6e9;
+            --clock-bg: #2d3436;
+            --shadow-light: #3d4649;
+            --shadow-dark: #1e2224;
+            --accent-color: #00cec9;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Segoe UI', sans-serif;
+            transition: background 0.4s ease;
+            position: relative;
+            margin: 0;
+        }
+
+        /* Tema Değiştirme Butonu */
+        .theme-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: none;
+            background: var(--clock-bg);
+            color: var(--text-color);
+            font-size: 1.5rem;
+            cursor: pointer;
+            /* Neumorphism Gölge Efekti */
+            box-shadow: 9px 9px 16px var(--shadow-dark), 
+                       -9px -9px 16px var(--shadow-light);
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .theme-btn:active {
+            box-shadow: inset 6px 6px 10px var(--shadow-dark), 
+                        inset -6px -6px 10px var(--shadow-light);
+        }
+
+        /* Saat Kutusu */
+        .clock-container {
+            width: 350px;
+            padding: 40px;
+            border-radius: 30px;
+            background: var(--clock-bg);
+            text-align: center;
+            /* Neumorphism Gölge Efekti */
+            box-shadow: 20px 20px 60px var(--shadow-dark), 
+                       -20px -20px 60px var(--shadow-light);
+            transition: all 0.4s ease;
+        }
+
+        .time {
+            font-size: 4rem;
+            font-weight: 700;
+            letter-spacing: 3px;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .date {
+            font-size: 1.2rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--accent-color);
+            font-weight: 600;
+        }
+        
+        .seconds {
+            font-size: 1.5rem;
+            color: var(--text-color);
+            opacity: 0.7;
+        }
+
+    </style>
+</head>
+<body>
+
+    <button class="theme-btn" onclick="toggleTheme()" id="themeIcon">
+        <i class="bi bi-moon-fill"></i>
+    </button>
+
+    <div class="clock-container">
+        <div class="time" id="displayTime">00:00</div>
+        <span class="seconds" id="displaySeconds">00</span>
+        <div class="date mt-3" id="displayDate">Pazartesi, 1 Ocak</div>
+    </div>
+
+    <script>
+        // 1. Saati Güncelleyen Fonksiyon
+        function updateClock() {
+            const now = new Date(); // Şu anki zamanı al
+
+            // Saat, Dakika, Saniye
+            let hours = now.getHours();
+            let minutes = now.getMinutes();
+            let seconds = now.getSeconds();
+
+            // Tek haneli sayıların başına 0 ekle (Örn: 9 -> 09)
+            hours = hours < 10 ? '0' + hours : hours;
+            minutes = minutes < 10 ? '0' + minutes : minutes;
+            seconds = seconds < 10 ? '0' + seconds : seconds;
+
+            // Ekrana yaz
+            document.getElementById('displayTime').innerText = `${hours}:${minutes}`;
+            document.getElementById('displaySeconds').innerText = seconds;
+
+            // Tarihi al (Türkçe formatında)
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            const dateStr = now.toLocaleDateString('tr-TR', options);
+            document.getElementById('displayDate').innerText = dateStr;
+        }
+
+        // 2. Tema Değiştirme Fonksiyonu
+        function toggleTheme() {
+            const body = document.body;
+            const icon = document.querySelector('#themeIcon i');
+            
+            // "dark-mode" sınıfını ekle/çıkar
+            body.classList.toggle('dark-mode');
+
+            // İkonu değiştir (Ay / Güneş)
+            if (body.classList.contains('dark-mode')) {
+                icon.classList.remove('bi-moon-fill');
+                icon.classList.add('bi-sun-fill');
+            } else {
+                icon.classList.remove('bi-sun-fill');
+                icon.classList.add('bi-moon-fill');
+            }
+        }
+
+        // 3. Zamanlayıcıyı Başlat (Her 1 saniyede bir çalıştır)
+        setInterval(updateClock, 1000);
+
+        // Sayfa açılır açılmaz saati göster (1 saniye beklememek için)
+        updateClock();
+    </script>
+</body>
+</html>
