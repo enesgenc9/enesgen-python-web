@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hava Durumu Pro</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    
+    <style>
+        body {
+            background: linear-gradient(to bottom, #4facfe 0%, #00f2fe 100%);
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Segoe UI', sans-serif;
+            color: white;
+        }
+        .weather-card {
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px); /* Buzlu cam efekti */
+            border-radius: 20px;
+            padding: 30px;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.15);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            transition: transform 0.3s;
+        }
+        .weather-card:hover {
+            transform: translateY(-5px);
+        }
+        .search-box {
+            background: rgba(255, 255, 255, 0.3);
+            border: none;
+            border-radius: 30px;
+            padding: 15px 25px;
+            color: white;
+            width: 100%;
+            outline: none;
+            margin-bottom: 20px;
+        }
+        .search-box::placeholder { color: rgba(255, 255, 255, 0.7); }
+        .temp-display {
+            font-size: 5rem;
+            font-weight: 200;
+            line-height: 1;
+        }
+        .condition-icon {
+            font-size: 4rem;
+            margin-bottom: 10px;
+        }
+        .details-row {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        .detail-item { text-align: center; }
+        .detail-label { font-size: 0.8rem; opacity: 0.8; }
+        .detail-value { font-weight: bold; font-size: 1.1rem; }
+    </style>
+</head>
+<body>
+
+    <div class="weather-card text-center">
+        <div class="position-relative">
+            <input type="text" class="search-box" id="cityInput" placeholder="Şehir Ara (örn: Istanbul)...">
+            <button onclick="getWeather()" class="btn btn-sm btn-light position-absolute top-50 end-0 translate-middle-y me-2 rounded-circle" style="width: 35px; height: 35px;">
+                <i class="bi bi-search"></i>
+            </button>
+        </div>
+
+        <div id="errorMsg" class="alert alert-danger p-2 mb-3" style="display: none; font-size: 0.9rem;"></div>
+
+        <div id="weatherInfo">
+            <h2 class="fw-bold mb-0" id="cityName">Şehir Seçin</h2>
+            <p class="small opacity-75" id="date">--</p>
+            
+            <i class="bi bi-cloud-sun condition-icon" id="weatherIcon"></i>
+            <div class="temp-display"><span id="temp">0</span>°</div>
+            <p class="fs-5" id="desc">Hava Durumu</p>
+
+            <div class="details-row">
+                <div class="detail-item">
+                    <i class="bi bi-wind"></i>
+                    <div class="detail-value"><span id="wind">0</span> km/s</div>
+                    <div class="detail-label">Rüzgar</div>
+                </div>
+                <div class="detail-item">
+                    <i class="bi bi-moisture"></i>
+                    <div class="detail-value">%<span id="humidity">0</span></div>
+                    <div class="detail-label">Nem</div> </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 1. API Ayarları
+        const geoApi = "https://geocoding-api.open-meteo.com/v1/search?name=";
+        const weatherApi = "https://api.open-meteo.com/v1/forecast";
+
+        // DOM Elemanları
+        const input = document.getElementById('cityInput');
+        const errorDiv = document.getElementById('errorMsg');
+
+        // WMO Hava Durumu Kodları (Code -> Icon/Text Eşleşmesi)
+        function getWeatherDesc(code) {
+            // Basit eşleştirme
+            if (code === 0) return { text: "Açık", icon: "bi-sun" };
+            if (code >= 1 && code <= 3) return { text: "Parçalı Bulutlu", icon: "bi-cloud-sun" };
+            if (code >= 45 && code <= 48) return { text: "Sisli", icon: "bi-cloud-haze" };
+            if (code >= 51 && code <= 67) return { text: "Yağmurlu", icon: "bi-cloud-drizzle" };
+            if (code >= 71 && code <= 77) return { text: "Karlı", icon: "bi-snow" };
+            if (code >= 80 && code <= 82) return { text: "Sağanak", icon: "bi-cloud-rain-heavy" };
+            if (code >= 95) return { text: "Fırtına", icon: "bi-cloud-lightning" };
+            return { text: "Bilinmiyor", icon: "bi-cloud" };
+        }
+
+        async function getWeather() {
+            const city = input.value.trim();
+            if(!city) return;
+
+            errorDiv.style.display = 'none';
+
+            try {
+                // ADIM 1: Şehir isminden Koordinat Bulma (Geocoding)
+                const geoRes = await fetch(`${geoApi}${city}&count=1&language=tr&format=json`);
+                const geoData = await geoRes.json();
+
+                if (!geoData.results) {
+                    throw new Error("Şehir bulunamadı!");
+                }
+
+                const { latitude, longitude, name, country } = geoData.results[0];
+
+                // ADIM 2: Koordinat ile Hava Durumu Çekme
+                const weatherRes = await fetch(`${weatherApi}?latitude=${latitude}&longitude=${longitude}&current_weather=true`);
+                const weatherData = await weatherRes.json();
+                
+                const current = weatherData.current_weather;
+
+                // ADIM 3: Veriyi Ekrana Basma
+                document.getElementById('cityName').innerText = `${name}, ${country}`;
+                document.getElementById('temp').innerText = Math.round(current.temperature);
+                document.getElementById('wind').innerText = current.windspeed;
+                
+                // Kod Çözümleme
+                const info = getWeatherDesc(current.weathercode);
+                document.getElementById('desc').innerText = info.text;
+                
+                // İkon Değiştirme
+                const iconEl = document.getElementById('weatherIcon');
+                iconEl.className = `condition-icon bi ${info.icon}`;
+
+                // Tarih
+                const now = new Date();
+                document.getElementById('date').innerText = now.toLocaleDateString('tr-TR', { weekday: 'long', day: 'numeric', month: 'long'});
+
+            } catch (error) {
+                errorDiv.innerText = error.message;
+                errorDiv.style.display = 'block';
+            }
+        }
+
+        // Enter tuşu desteği
+        input.addEventListener("keypress", function(e) {
+            if (e.key === "Enter") getWeather();
+        });
+    </script>
+</body>
+</html>
