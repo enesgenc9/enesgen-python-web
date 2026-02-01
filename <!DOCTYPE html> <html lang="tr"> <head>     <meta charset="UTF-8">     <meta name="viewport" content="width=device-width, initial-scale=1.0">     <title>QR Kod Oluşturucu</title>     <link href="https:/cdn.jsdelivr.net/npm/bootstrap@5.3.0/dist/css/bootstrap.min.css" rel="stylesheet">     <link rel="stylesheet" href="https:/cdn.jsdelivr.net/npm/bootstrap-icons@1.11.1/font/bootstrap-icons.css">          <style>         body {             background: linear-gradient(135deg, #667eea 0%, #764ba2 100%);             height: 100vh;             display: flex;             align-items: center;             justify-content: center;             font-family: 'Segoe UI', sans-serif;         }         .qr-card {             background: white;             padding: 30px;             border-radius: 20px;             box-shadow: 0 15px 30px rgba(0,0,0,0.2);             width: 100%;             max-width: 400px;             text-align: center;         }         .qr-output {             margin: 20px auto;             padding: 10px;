@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR Kod Oluşturucu</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Segoe UI', sans-serif;
+        }
+        .qr-card {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 15px 30px rgba(0,0,0,0.2);
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+        }
+        .qr-output {
+            margin: 20px auto;
+            padding: 10px;
+            border: 2px dashed #ddd;
+            border-radius: 10px;
+            min-height: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        /* QR kodu resminin ortalanması için */
+        .qr-output img {
+            max-width: 100%;
+        }
+        .form-control:focus {
+            box-shadow: none;
+            border-color: #764ba2;
+        }
+        .btn-generate {
+            background-color: #764ba2;
+            color: white;
+            width: 100%;
+            font-weight: 600;
+        }
+        .btn-generate:hover {
+            background-color: #5b3a7d;
+            color: white;
+        }
+        .btn-download {
+            background-color: #28a745;
+            color: white;
+            width: 100%;
+            display: none; /* Başlangıçta gizli */
+        }
+        .btn-download:hover { background-color: #218838; color: white; }
+    </style>
+</head>
+<body>
+
+    <div class="qr-card">
+        <h3 class="fw-bold mb-3"><i class="bi bi-qr-code-scan me-2"></i>QR Oluşturucu</h3>
+        <p class="text-muted small">Bir metin veya URL girin, QR kodunuzu oluşturun.</p>
+
+        <div class="mb-3">
+            <input type="text" class="form-control form-control-lg" id="qrText" placeholder="Örn: https://google.com">
+        </div>
+
+        <button class="btn btn-generate btn-lg mb-3" onclick="generateQR()">
+            Oluştur
+        </button>
+
+        <div class="qr-output" id="qrCodeContainer">
+            <span class="text-muted" id="placeholderText">QR Kod burada görünecek</span>
+        </div>
+
+        <a id="downloadBtn" class="btn btn-download btn-lg" download="qrcode.png">
+            <i class="bi bi-download me-2"></i>Resmi İndir
+        </a>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+    <script>
+        // Değişkenler
+        const qrContainer = document.getElementById('qrCodeContainer');
+        const qrInput = document.getElementById('qrText');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const placeholder = document.getElementById('placeholderText');
+        let qrcode = null;
+
+        function generateQR() {
+            const text = qrInput.value;
+
+            // Boş mu kontrol et
+            if (text.trim() === "") {
+                alert("Lütfen bir metin veya link girin!");
+                return;
+            }
+
+            // Önceki QR kodunu temizle
+            qrContainer.innerHTML = "";
+            
+            // Yeni QR kodu oluştur (Kütüphane fonksiyonu)
+            // QRCode(yer, ayarlar)
+            qrcode = new QRCode(qrContainer, {
+                text: text,
+                width: 180,
+                height: 180,
+                colorDark : "#000000",
+                colorLight : "#ffffff",
+                correctLevel : QRCode.CorrectLevel.H
+            });
+
+            // İndirme butonunu hazırla (Biraz gecikme lazım ki resim oluşsun)
+            setTimeout(() => {
+                // Kütüphane bir <img> etiketi oluşturur, onun kaynağını (src) alıyoruz
+                const img = qrContainer.querySelector("img");
+                if (img) {
+                    downloadBtn.href = img.src; // İndirme linkine resim verisini ata
+                    downloadBtn.style.display = "block"; // Butonu göster
+                }
+            }, 300);
+        }
+
+        // Enter tuşuna basınca çalışsın
+        qrInput.addEventListener("keypress", function(event) {
+            if (event.key === "Enter") generateQR();
+        });
+    </script>
+</body>
+</html>
