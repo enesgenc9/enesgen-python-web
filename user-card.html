@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Kullanıcı Kartı</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        body {
+            background-color: #f0f2f5;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Segoe UI', sans-serif;
+        }
+        .card-profile {
+            width: 350px;
+            border: none;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            background: white;
+            transition: all 0.3s ease;
+        }
+        .card-header-bg {
+            height: 120px;
+            background: linear-gradient(45deg, #4158D0, #C850C0, #FFCC70);
+        }
+        .profile-img-container {
+            width: 120px;
+            height: 120px;
+            margin: -60px auto 10px;
+            border-radius: 50%;
+            border: 5px solid white;
+            overflow: hidden;
+            background-color: #eee;
+            position: relative;
+        }
+        .profile-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .user-info {
+            text-align: center;
+            padding: 20px;
+        }
+        .info-item {
+            display: flex;
+            align-items: center;
+            color: #666;
+            margin-bottom: 10px;
+            font-size: 0.9rem;
+        }
+        .info-item i {
+            width: 25px;
+            color: #4158D0;
+        }
+        .btn-generate {
+            background: #212529;
+            color: white;
+            border-radius: 50px;
+            padding: 10px 30px;
+            border: none;
+            font-weight: 600;
+            transition: 0.2s;
+        }
+        .btn-generate:hover {
+            background: #000;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        /* Yükleniyor efekti */
+        .loading .profile-img { opacity: 0.5; }
+    </style>
+</head>
+<body>
+
+    <div class="card-profile">
+        <div class="card-header-bg"></div>
+
+        <div class="profile-img-container">
+            <img src="https://via.placeholder.com/150" alt="Profile" class="profile-img" id="img">
+        </div>
+
+        <div class="user-info">
+            <h3 class="fw-bold mb-1" id="name">Yükleniyor...</h3>
+            <p class="text-muted small mb-4" id="username">@kullanici</p>
+
+            <div class="d-flex flex-column gap-2 mb-4 px-3">
+                <div class="info-item">
+                    <i class="bi bi-envelope"></i>
+                    <span id="email">email@adresi.com</span>
+                </div>
+                <div class="info-item">
+                    <i class="bi bi-geo-alt"></i>
+                    <span id="location">Şehir, Ülke</span>
+                </div>
+                <div class="info-item">
+                    <i class="bi bi-telephone"></i>
+                    <span id="phone">+90 555 000 00 00</span>
+                </div>
+            </div>
+
+            <button class="btn btn-generate" onclick="getUser()">
+                <i class="bi bi-arrow-repeat me-2"></i>Yeni Kişi
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const apiUrl = 'https://randomuser.me/api/';
+
+        // DOM Elemanlarını Seç
+        const imgEl = document.getElementById('img');
+        const nameEl = document.getElementById('name');
+        const userEl = document.getElementById('username');
+        const emailEl = document.getElementById('email');
+        const locEl = document.getElementById('location');
+        const phoneEl = document.getElementById('phone');
+
+        // Asenkron Fonksiyon (API'den Veri Çekme)
+        async function getUser() {
+            try {
+                // Butona basınca yükleniyor hissi ver
+                nameEl.innerText = "Yükleniyor...";
+                imgEl.style.opacity = "0.5";
+
+                // 1. İsteği Gönder (Fetch)
+                const response = await fetch(apiUrl);
+                
+                // 2. Cevabı JSON formatına çevir
+                const data = await response.json();
+                
+                // Gelen veriyi konsolda görebilirsin (F12)
+                console.log(data);
+
+                // 3. Veriyi Parçala (Destructuring)
+                const user = data.results[0];
+                
+                // 4. HTML'i Güncelle
+                imgEl.src = user.picture.large;
+                nameEl.innerText = `${user.name.first} ${user.name.last}`;
+                userEl.innerText = `@${user.login.username}`;
+                emailEl.innerText = user.email;
+                locEl.innerText = `${user.location.city}, ${user.location.country}`;
+                phoneEl.innerText = user.phone;
+
+                // Resmi düzelt
+                imgEl.style.opacity = "1";
+
+            } catch (error) {
+                console.error("Hata oluştu:", error);
+                nameEl.innerText = "Hata oluştu!";
+            }
+        }
+
+        // Sayfa açılınca otomatik çağır
+        getUser();
+    </script>
+</body>
+</html>
